@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#	zakomentowane: debugging i takie tam albo jak coś psułoby estetykę wydruku
+
+znaleziono = 0
+
+if [ "$#" -lt 2 ]; then
+	echo "skrypt o dwoch argumentach:"
+	echo "./szukaj katalog plik"
+#	echo "ktory podobnie jak polecenie find znajduje wszystkie wystapienia pliku w poddrzewie katalogow o podanej nazwie sciezkowej korzenia."
+	echo "skrypt dziala na zasadzie wspolbieznych rekurencyjnych wywolan dla wszystkich podkatalogow"
+	exit
+fi
+
+procesy = ""
+
+for obiekt in $1/*; do
+	if [ -f "$obiekt" ]; then
+		if [ $(basename $obiekt) == "$2" ]; then
+			((znaleziono++))
+			echo "wystapienie:" "$1"
+		fi
+	elif [ -d "$obiekt" ]; then
+#		echo "wszedlem do folderu" "$obiekt"
+		./szukaj "$obiekt" "$2" "arg" &
+		procesy+=("$!")
+	fi
+done
+
+for proces in "${procesy[@]}"; do
+	if [ "$proces" ]; then
+		wait "$proces"
+#		echo "$proces"
+		((znaleziono+=$?))
+	fi
+done
+
+if [ -z "$3" ]; then
+	if [ "$znaleziono" -eq 0 ]; then
+		echo "Nie znaleziono"
+#	else
+#		echo "Znaleziono: $znaleziono"
+	fi
+fi
+
+exit "$znaleziono"
+
